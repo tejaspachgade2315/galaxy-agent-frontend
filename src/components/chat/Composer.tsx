@@ -124,9 +124,11 @@ export function Composer({ onSend, onCancel, disabled = false }: ComposerProps) 
               const data = await uploadRes.json();
               assemblyId = data.assembly_id || "";
               finalUrl =
+                data.uploads?.[0]?.ssl_url ||
                 data.results?.[":original"]?.[0]?.ssl_url ||
                 data.assembly_ssl_url ||
                 finalUrl;
+              console.log("[Transloadit] Upload successful:", { assemblyId, finalUrl });
             }
           }
         } catch (_) {
