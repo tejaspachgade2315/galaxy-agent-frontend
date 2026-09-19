@@ -17,7 +17,20 @@ export function Providers({ children }: { children: React.ReactNode }) {
       })
   );
 
-  const clerkKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+  let clerkKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || "pk_test_bWFqb3Itb3gtNzA4Ni5jbGVyay5hY2NvdW50cy5kZXYk";
+
+  // If a pk_live key without DNS CNAME records is detected, automatically use the working pk_test key
+  if (clerkKey && clerkKey.startsWith("pk_live_")) {
+    try {
+      const raw = clerkKey.replace("pk_live_", "");
+      const decoded = typeof atob === "function" ? atob(raw) : Buffer.from(raw, "base64").toString();
+      if (decoded.includes("vercel.app")) {
+        clerkKey = "pk_test_bWFqb3Itb3gtNzA4Ni5jbGVyay5hY2NvdW50cy5kZXYk";
+      }
+    } catch {
+      // ignore
+    }
+  }
 
   // If Clerk publishable key is present, wrap in ClerkProvider
   if (clerkKey && clerkKey.trim().length > 0) {
