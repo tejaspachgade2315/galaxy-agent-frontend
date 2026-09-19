@@ -25,6 +25,7 @@ export default function ChatPage() {
     streamingChatId,
     startStreaming,
     appendThinking,
+    setThinking,
     appendText,
     onToolStart,
     onToolEnd,
@@ -128,11 +129,18 @@ export default function ChatPage() {
       queryClient.invalidateQueries({ queryKey: ["credits"] });
     });
 
+    es.addEventListener("connected", () => {
+      setStatusMessage("Agent connected...");
+    });
+
     es.addEventListener("error", async () => {
       try {
-        await queryClient.refetchQueries({ queryKey: ["chat", targetChatId] });
+        const fresh = await apiClient.getChat(targetChatId);
+        if (!fresh?.activeRun || fresh.activeRun.status === "completed" || fresh.activeRun.status === "failed") {
+          await queryClient.refetchQueries({ queryKey: ["chat", targetChatId] });
+          cleanupStream();
+        }
       } catch (_) {}
-      cleanupStream();
     });
   };
 
@@ -153,6 +161,57 @@ export default function ChatPage() {
       }
     };
   }, []);
+
+  // Resilient Database Polling Fallback: guarantees live UI sync across serverless lambda containers
+  useEffect(() => {
+    if (!isStreaming || !activeChatId) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const fresh = await apiClient.getChat(activeChatId);
+        if (!fresh) return;
+
+        // Check if run completed or failed in DB
+        if (!fresh.activeRun || fresh.activeRun.status === "completed" || fresh.activeRun.status === "failed") {
+          await queryClient.refetchQueries({ queryKey: ["chat", activeChatId] });
+          queryClient.invalidateQueries({ queryKey: ["chats"] });
+          queryClient.invalidateQueries({ queryKey: ["credits"] });
+          cleanupStream();
+          return;
+        }
+
+        // Sync latest running assistant message thinking and tools from DB
+        const runningAssistant = (fresh.messages || []).find(
+          (m: any) => m.role === "assistant" && (m.status === "running" || m.status === "completed")
+        );
+        if (runningAssistant && Array.isArray(runningAssistant.content)) {
+          for (const block of (runningAssistant.content as any[])) {
+            if (block.type === "thinking" && block.thinking && block.thinking !== "Preparing response...") {
+              setThinking(block.thinking);
+            } else if (block.type === "tool_call") {
+              onToolStart({
+                toolCallId: block.toolCallId || block.id,
+                name: block.name,
+                input: block.input,
+              });
+            } else if (block.type === "tool_result") {
+              onToolEnd({
+                toolCallId: block.toolCallId || block.id,
+                name: block.name,
+                output: block.output,
+                creditsCost: block.creditsCost,
+                durationMs: block.durationMs,
+              });
+            }
+          }
+        }
+      } catch (_) {
+        // Ignore transient polling errors
+      }
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [isStreaming, activeChatId]);
 
   const handleSendMessage = async (text: string, planMode: boolean, attachmentIds?: string[]) => {
     try {

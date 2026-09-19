@@ -102,7 +102,13 @@ export function MessageList({ messages, onSelectPrompt }: MessageListProps) {
             {/* Live Thinking */}
             {Boolean(streamingThinking || !streamingText) && (
               <ThinkingBlock
-                thinking={streamingThinking || "Preparing response..."}
+                thinking={
+                  streamingThinking && streamingThinking !== "Preparing response..."
+                    ? streamingThinking
+                    : streamingTools.some((t) => t.status === "running")
+                    ? `Executing ${streamingTools.find((t) => t.status === "running")?.name} pipeline and awaiting GPU generation...`
+                    : streamingThinking || "Analyzing intent and preparing execution plan..."
+                }
                 isStreaming={true}
                 startTime={runStartedAt || undefined}
                 hasAnswerStarted={Boolean(streamingText && streamingText.length > 0)}

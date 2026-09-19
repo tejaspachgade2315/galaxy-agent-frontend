@@ -34,6 +34,7 @@ interface AppState {
   setArtifactContent: (data: { title: string; type: string; content: string } | null) => void;
   startStreaming: (runId: string, chatId: string, startedAt?: string) => void;
   appendThinking: (chunk: string) => void;
+  setThinking: (text: string) => void;
   appendText: (chunk: string) => void;
   onToolStart: (data: { toolCallId: string; name: string; input: any }) => void;
   onToolEnd: (data: { toolCallId: string; name: string; output: any; creditsCost?: number; durationMs?: number }) => void;
@@ -82,6 +83,7 @@ export const useAppStore = create<AppState>((set) => ({
           ? chunk
           : state.streamingThinking + chunk,
     })),
+  setThinking: (text) => set({ streamingThinking: text }),
   appendText: (chunk) =>
     set((state) => ({
       streamingText: state.streamingText + chunk,
