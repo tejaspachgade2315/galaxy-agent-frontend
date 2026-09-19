@@ -86,9 +86,11 @@ export function MessageList({ messages, onSelectPrompt }: MessageListProps) {
 
   return (
     <div className="flex-1 overflow-y-auto py-4">
-      {messages.map((msg) => (
-        <MessageItem key={msg.id} message={msg} />
-      ))}
+      {messages
+        .filter((msg) => !(isCurrentChatStreaming && msg.role === "assistant" && msg.status === "running"))
+        .map((msg) => (
+          <MessageItem key={msg.id} message={msg} />
+        ))}
 
       {/* Live streaming message bubble */}
       {isCurrentChatStreaming && (
@@ -103,7 +105,7 @@ export function MessageList({ messages, onSelectPrompt }: MessageListProps) {
                 thinking={streamingThinking || "Preparing response..."}
                 isStreaming={true}
                 startTime={runStartedAt || undefined}
-                hasAnswerStarted={Boolean(streamingText && streamingText.length > 0) || streamingTools.length > 0}
+                hasAnswerStarted={Boolean(streamingText && streamingText.length > 0)}
               />
             )}
 

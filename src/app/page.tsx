@@ -43,7 +43,7 @@ export default function ChatPage() {
   // Reload / Navigation Recovery: Reconnect to active running turn on mount or when switching chats
   useEffect(() => {
     // If a stream is already actively running for the current active chat, don't interrupt it
-    if (currentStreamingRunIdRef.current) {
+    if (currentStreamingRunIdRef.current && streamingChatId === activeChatId) {
       return;
     }
 
@@ -51,7 +51,7 @@ export default function ChatPage() {
       const runStart = (chatData.activeRun as any).startedAt || (chatData.activeRun as any).createdAt;
       connectToStream(chatData.activeRun.id, chatData.chat.id, runStart);
     } else if (streamingChatId && streamingChatId !== activeChatId) {
-      // Switched away to a different chat that is not running
+      // Switched away to a different chat or New Chat that is not running
       cleanupStream();
     }
   }, [chatData?.activeRun?.id, chatData?.activeRun?.status, activeChatId, streamingChatId]);

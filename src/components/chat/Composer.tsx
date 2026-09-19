@@ -41,7 +41,8 @@ export function Composer({ onSend, onCancel, disabled = false }: ComposerProps) 
   const [planMode, setPlanMode] = useState(false);
   const [attachments, setAttachments] = useState<AttachmentItem[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const { isStreaming } = useAppStore();
+  const { isStreaming, streamingChatId, activeChatId } = useAppStore();
+  const isThisChatStreaming = isStreaming && Boolean(activeChatId && streamingChatId === activeChatId);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -51,7 +52,7 @@ export function Composer({ onSend, onCancel, disabled = false }: ComposerProps) 
   };
 
   const handleSubmit = () => {
-    if ((!text.trim() && attachments.length === 0) || isStreaming || disabled) return;
+    if ((!text.trim() && attachments.length === 0) || isThisChatStreaming || disabled) return;
 
     const readyAttachmentIds = attachments
       .filter((a) => a.status === "ready" && a.attachmentId)
@@ -254,13 +255,13 @@ export function Composer({ onSend, onCancel, disabled = false }: ComposerProps) 
             onChange={handleInput}
             onKeyDown={handleKeyDown}
             placeholder={
-              isStreaming
+              isThisChatStreaming
                 ? "Agent is responding..."
                 : planMode
                 ? "Plan Mode: Ask agent to architect, outline steps, or research strategy..."
                 : "Ask anything or type instructions..."
             }
-            disabled={disabled || isStreaming}
+            disabled={disabled || isThisChatStreaming}
             className="w-full bg-transparent text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none resize-none max-h-44 leading-relaxed"
           />
         </div>
@@ -273,7 +274,7 @@ export function Composer({ onSend, onCancel, disabled = false }: ComposerProps) 
               htmlFor="composer-file-upload"
               title="Attach files (Transloadit Community enabled, max 500 MB)"
               className={`p-1.5 text-zinc-400 hover:text-zinc-200 hover:bg-surface-200 rounded-lg transition-colors cursor-pointer flex items-center justify-center ${
-                isStreaming || disabled ? "pointer-events-none opacity-40" : ""
+                isThisChatStreaming || disabled ? "pointer-events-none opacity-40" : ""
               }`}
             >
               <Paperclip size={15} />
@@ -284,7 +285,7 @@ export function Composer({ onSend, onCancel, disabled = false }: ComposerProps) 
                 multiple
                 accept="image/*,video/*,audio/*,application/pdf,text/*,.csv,.json"
                 className="sr-only"
-                disabled={isStreaming || disabled}
+                disabled={isThisChatStreaming || disabled}
               />
             </label>
 
@@ -311,7 +312,7 @@ export function Composer({ onSend, onCancel, disabled = false }: ComposerProps) 
 
           {/* Send / Stop Action */}
           <div className="flex items-center gap-2">
-            {isStreaming ? (
+            {isThisChatStreaming ? (
               <button
                 type="button"
                 onClick={onCancel}
