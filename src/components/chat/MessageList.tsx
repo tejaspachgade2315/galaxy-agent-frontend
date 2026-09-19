@@ -98,9 +98,9 @@ export function MessageList({ messages, onSelectPrompt }: MessageListProps) {
           </div>
           <div className="flex-1 min-w-0">
             {/* Live Thinking */}
-            {streamingThinking && (
+            {Boolean(streamingThinking || !streamingText) && (
               <ThinkingBlock
-                thinking={streamingThinking}
+                thinking={streamingThinking || "Preparing response..."}
                 isStreaming={true}
                 startTime={runStartedAt || undefined}
                 hasAnswerStarted={Boolean(streamingText && streamingText.length > 0) || streamingTools.length > 0}

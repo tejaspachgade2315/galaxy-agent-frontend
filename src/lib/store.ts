@@ -69,7 +69,7 @@ export const useAppStore = create<AppState>((set) => ({
       streamingChatId: chatId,
       runStartedAt: startedAt || new Date().toISOString(),
       isStreaming: true,
-      streamingThinking: "",
+      streamingThinking: "Preparing response...",
       streamingText: "",
       streamingTools: [],
       statusMessage: "Thinking...",
@@ -77,7 +77,10 @@ export const useAppStore = create<AppState>((set) => ({
     }),
   appendThinking: (chunk) =>
     set((state) => ({
-      streamingThinking: state.streamingThinking + chunk,
+      streamingThinking:
+        state.streamingThinking === "Preparing response..."
+          ? chunk
+          : state.streamingThinking + chunk,
     })),
   appendText: (chunk) =>
     set((state) => ({

@@ -35,6 +35,8 @@ export function ThinkingBlock({
 
   const [elapsedSec, setElapsedSec] = useState<number>(getInitialElapsed);
 
+  const wasActivelyThinkingRef = React.useRef(isActivelyThinking);
+
   useEffect(() => {
     if (isActivelyThinking) {
       setIsOpen(true);
@@ -44,10 +46,11 @@ export function ThinkingBlock({
         setElapsedSec(+diff.toFixed(1));
       }, 100);
       return () => clearInterval(timer);
-    } else {
+    } else if (wasActivelyThinkingRef.current && !isActivelyThinking) {
       // Auto-collapse when answer starts or when done
       setIsOpen(false);
     }
+    wasActivelyThinkingRef.current = isActivelyThinking;
   }, [isActivelyThinking, startTime]);
 
   if (!thinking || thinking.trim().length === 0) return null;
