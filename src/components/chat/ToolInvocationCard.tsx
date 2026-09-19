@@ -24,6 +24,7 @@ interface ToolInvocationCardProps {
   durationMs?: number;
   creditsCost?: number;
   errorMessage?: string;
+  startTime?: string | number | Date;
 }
 
 export function ToolInvocationCard({
@@ -34,8 +35,26 @@ export function ToolInvocationCard({
   durationMs,
   creditsCost,
   errorMessage,
+  startTime,
 }: ToolInvocationCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [toolElapsed, setToolElapsed] = useState<number>(() => {
+    if (startTime && status === "running") {
+      return Math.max(0, +((Date.now() - new Date(startTime).getTime()) / 1000).toFixed(1));
+    }
+    return 0;
+  });
+
+  React.useEffect(() => {
+    if (status === "running") {
+      const startMs = startTime ? new Date(startTime).getTime() : Date.now() - toolElapsed * 1000;
+      const timer = setInterval(() => {
+        const diff = Math.max(0, (Date.now() - startMs) / 1000);
+        setToolElapsed(+diff.toFixed(1));
+      }, 100);
+      return () => clearInterval(timer);
+    }
+  }, [status, startTime]);
 
   const getToolIcon = (toolName: string) => {
     switch (toolName) {
@@ -99,7 +118,7 @@ export function ToolInvocationCard({
           {status === "running" && (
             <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-accent-blue text-[11px] font-medium">
               <Loader2 size={12} className="animate-spin" />
-              <span>Executing...</span>
+              <span>Executing{toolElapsed > 0 ? ` (${toolElapsed.toFixed(1)}s)...` : "..."}</span>
             </div>
           )}
 
@@ -107,7 +126,7 @@ export function ToolInvocationCard({
             <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[11px] font-medium">
               <CheckCircle2 size={12} />
               <span>
-                {durationMs ? `${(durationMs / 1000).toFixed(1)}s` : "Done"}
+                {durationMs ? `${(durationMs / 1000).toFixed(1)}s` : toolElapsed > 0 ? `${toolElapsed.toFixed(1)}s` : "Done"}
               </span>
             </div>
           )}

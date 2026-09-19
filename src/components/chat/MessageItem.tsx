@@ -70,9 +70,15 @@ export function MessageItem({ message }: { message: Message }) {
         {thinkingBlock && (
           <ThinkingBlock
             thinking={(thinkingBlock as any).thinking}
-            durationMs={(thinkingBlock as any).durationMs}
+            durationMs={
+              (thinkingBlock as any).durationMs ||
+              (message.updatedAt && message.createdAt && message.status !== "running"
+                ? Math.max(0, new Date(message.updatedAt).getTime() - new Date(message.createdAt).getTime())
+                : undefined)
+            }
             isStreaming={message.status === "running"}
             hasAnswerStarted={message.status !== "running" || combinedText.length > 0}
+            startTime={message.createdAt}
           />
         )}
 
@@ -94,7 +100,9 @@ export function MessageItem({ message }: { message: Message }) {
                 input={tcBlock.input}
                 output={output}
                 status={status}
+                durationMs={matchingResult?.durationMs}
                 creditsCost={matchingResult?.creditsCost}
+                startTime={message.createdAt}
               />
 
               {/* Render Image Assets */}

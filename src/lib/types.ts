@@ -2,7 +2,7 @@ export type ContentBlock =
   | { type: "text"; text: string }
   | { type: "thinking"; thinking: string; durationMs?: number }
   | { type: "tool_call"; toolCallId: string; name: string; input: any }
-  | { type: "tool_result"; toolCallId: string; name: string; output?: any; isError?: boolean; creditsCost?: number };
+  | { type: "tool_result"; toolCallId: string; name: string; output?: any; isError?: boolean; creditsCost?: number; durationMs?: number };
 
 export interface Attachment {
   id: string;

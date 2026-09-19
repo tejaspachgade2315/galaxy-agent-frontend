@@ -7,6 +7,8 @@ export interface StreamingToolState {
   output?: any;
   status: "running" | "completed" | "failed";
   creditsCost?: number;
+  durationMs?: number;
+  startedAt?: string;
 }
 
 interface AppState {
@@ -16,6 +18,7 @@ interface AppState {
   artifactContent: { title: string; type: string; content: string } | null;
   activeRunId: string | null;
   streamingChatId: string | null;
+  runStartedAt: string | null;
   isStreaming: boolean;
   streamingThinking: string;
   streamingText: string;
@@ -29,11 +32,11 @@ interface AppState {
   setSidebarOpen: (open: boolean) => void;
   toggleArtifact: () => void;
   setArtifactContent: (data: { title: string; type: string; content: string } | null) => void;
-  startStreaming: (runId: string, chatId: string) => void;
+  startStreaming: (runId: string, chatId: string, startedAt?: string) => void;
   appendThinking: (chunk: string) => void;
   appendText: (chunk: string) => void;
   onToolStart: (data: { toolCallId: string; name: string; input: any }) => void;
-  onToolEnd: (data: { toolCallId: string; name: string; output: any; creditsCost?: number }) => void;
+  onToolEnd: (data: { toolCallId: string; name: string; output: any; creditsCost?: number; durationMs?: number }) => void;
   setStatusMessage: (status: string) => void;
   setActiveWaitpoint: (wp: any) => void;
   stopStreaming: () => void;
@@ -46,6 +49,7 @@ export const useAppStore = create<AppState>((set) => ({
   artifactContent: null,
   activeRunId: null,
   streamingChatId: null,
+  runStartedAt: null,
   isStreaming: false,
   streamingThinking: "",
   streamingText: "",
@@ -59,10 +63,11 @@ export const useAppStore = create<AppState>((set) => ({
   toggleArtifact: () => set((state) => ({ isArtifactOpen: !state.isArtifactOpen })),
   setArtifactContent: (data) => set({ artifactContent: data, isArtifactOpen: !!data }),
   setActiveWaitpoint: (wp) => set({ activeWaitpoint: wp }),
-  startStreaming: (runId, chatId) =>
+  startStreaming: (runId, chatId, startedAt) =>
     set({
       activeRunId: runId,
       streamingChatId: chatId,
+      runStartedAt: startedAt || new Date().toISOString(),
       isStreaming: true,
       streamingThinking: "",
       streamingText: "",
@@ -83,7 +88,7 @@ export const useAppStore = create<AppState>((set) => ({
     set((state) => ({
       streamingTools: [
         ...state.streamingTools.filter((t) => t.toolCallId !== data.toolCallId),
-        { ...data, status: "running" },
+        { ...data, status: "running", startedAt: new Date().toISOString() },
       ],
       statusMessage: `Running ${data.name}...`,
     })),
@@ -91,7 +96,13 @@ export const useAppStore = create<AppState>((set) => ({
     set((state) => ({
       streamingTools: state.streamingTools.map((t) =>
         t.toolCallId === data.toolCallId
-          ? { ...t, output: data.output, creditsCost: data.creditsCost, status: "completed" }
+          ? {
+              ...t,
+              output: data.output,
+              creditsCost: data.creditsCost,
+              durationMs: data.durationMs,
+              status: "completed",
+            }
           : t
       ),
       statusMessage: `Finished ${data.name}`,

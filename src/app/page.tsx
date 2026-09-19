@@ -48,20 +48,21 @@ export default function ChatPage() {
     }
 
     if (chatData?.activeRun && (chatData.activeRun.status === "running" || chatData.activeRun.status === "waiting")) {
-      connectToStream(chatData.activeRun.id, chatData.chat.id);
+      const runStart = (chatData.activeRun as any).startedAt || (chatData.activeRun as any).createdAt;
+      connectToStream(chatData.activeRun.id, chatData.chat.id, runStart);
     } else if (streamingChatId && streamingChatId !== activeChatId) {
       // Switched away to a different chat that is not running
       cleanupStream();
     }
   }, [chatData?.activeRun?.id, chatData?.activeRun?.status, activeChatId, streamingChatId]);
 
-  const connectToStream = (runId: string, targetChatId: string) => {
+  const connectToStream = (runId: string, targetChatId: string, startedAt?: string) => {
     if (eventSourceRef.current) {
       eventSourceRef.current.close();
     }
 
     currentStreamingRunIdRef.current = runId;
-    startStreaming(runId, targetChatId);
+    startStreaming(runId, targetChatId, startedAt);
 
     const streamUrl = apiClient.getStreamUrl(runId);
     const es = new EventSource(streamUrl);
@@ -186,8 +187,9 @@ export default function ChatPage() {
       });
 
       // 2. Immediately put UI in active agent thinking state
+      const turnStartTime = new Date().toISOString();
       const tempRunId = `run_${Date.now()}`;
-      startStreaming(tempRunId, chatId);
+      startStreaming(tempRunId, chatId, turnStartTime);
       setStatusMessage("Connecting to Galaxy agent...");
 
       // 3. Dispatch to backend
@@ -208,14 +210,14 @@ export default function ChatPage() {
             title: old.chat.title === "New Chat" ? text.slice(0, 36).trim() : old.chat.title,
           },
           messages: [...filtered, res.userMessage],
-          activeRun: { id: res.runId, status: "running" },
+          activeRun: { id: res.runId, status: "running", startedAt: turnStartTime },
         };
       });
 
       queryClient.invalidateQueries({ queryKey: ["chats"] });
 
       // 5. Connect SSE to the actual runId
-      connectToStream(res.runId, chatId);
+      connectToStream(res.runId, chatId, turnStartTime);
     } catch (err: any) {
       console.error("Failed to send message:", err);
       cleanupStream();

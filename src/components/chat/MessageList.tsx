@@ -29,6 +29,7 @@ export function MessageList({ messages, onSelectPrompt }: MessageListProps) {
     statusMessage,
     activeWaitpoint,
     setActiveWaitpoint,
+    runStartedAt,
   } = useAppStore();
 
   const isCurrentChatStreaming = isStreaming && streamingChatId === activeChatId;
@@ -101,6 +102,7 @@ export function MessageList({ messages, onSelectPrompt }: MessageListProps) {
               <ThinkingBlock
                 thinking={streamingThinking}
                 isStreaming={true}
+                startTime={runStartedAt || undefined}
                 hasAnswerStarted={Boolean(streamingText && streamingText.length > 0) || streamingTools.length > 0}
               />
             )}
@@ -114,6 +116,8 @@ export function MessageList({ messages, onSelectPrompt }: MessageListProps) {
                   output={tool.output}
                   status={tool.status}
                   creditsCost={tool.creditsCost}
+                  durationMs={tool.durationMs}
+                  startTime={tool.startedAt}
                 />
 
                 {/* Render live completed image */}

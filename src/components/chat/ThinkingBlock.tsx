@@ -8,6 +8,7 @@ interface ThinkingBlockProps {
   isStreaming?: boolean;
   durationMs?: number;
   hasAnswerStarted?: boolean;
+  startTime?: string | number | Date;
 }
 
 export function ThinkingBlock({
@@ -15,26 +16,39 @@ export function ThinkingBlock({
   isStreaming = false,
   durationMs,
   hasAnswerStarted = false,
+  startTime,
 }: ThinkingBlockProps) {
   // Actively thinking when streaming and answer has not yet started
   const isActivelyThinking = isStreaming && !hasAnswerStarted;
 
   // Open by default ONLY while actively thinking; collapse once answer starts or turn completes
   const [isOpen, setIsOpen] = useState(isActivelyThinking);
-  const [elapsedSec, setElapsedSec] = useState<number>(0);
+
+  // Anchor initial elapsed time to the actual start timestamp so page reload never resets counter to 0
+  const getInitialElapsed = () => {
+    if (startTime) {
+      const ms = Date.now() - new Date(startTime).getTime();
+      return Math.max(0, +(ms / 1000).toFixed(1));
+    }
+    return 0;
+  };
+
+  const [elapsedSec, setElapsedSec] = useState<number>(getInitialElapsed);
 
   useEffect(() => {
     if (isActivelyThinking) {
       setIsOpen(true);
+      const startMs = startTime ? new Date(startTime).getTime() : Date.now() - elapsedSec * 1000;
       const timer = setInterval(() => {
-        setElapsedSec((prev) => +(prev + 0.1).toFixed(1));
+        const diff = Math.max(0, (Date.now() - startMs) / 1000);
+        setElapsedSec(+diff.toFixed(1));
       }, 100);
       return () => clearInterval(timer);
     } else {
       // Auto-collapse when answer starts or when done
       setIsOpen(false);
     }
-  }, [isActivelyThinking]);
+  }, [isActivelyThinking, startTime]);
 
   if (!thinking || thinking.trim().length === 0) return null;
 
