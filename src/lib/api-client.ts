@@ -11,10 +11,22 @@ class ApiClient {
 
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
-    const headers = {
+    const headers: Record<string, string> = {
       "Content-Type": "application/json",
-      ...(options.headers || {}),
+      ...((options.headers as Record<string, string>) || {}),
     };
+
+    // Forward Clerk Bearer token if user is authenticated in the browser
+    try {
+      if (typeof window !== "undefined" && (window as any).Clerk?.session) {
+        const token = await (window as any).Clerk.session.getToken();
+        if (token && !headers["Authorization"]) {
+          headers["Authorization"] = `Bearer ${token}`;
+        }
+      }
+    } catch {
+      // Dev mode fallback
+    }
 
     const res = await fetch(url, {
       ...options,

@@ -2,7 +2,8 @@
 
 import React from "react";
 import { useAppStore } from "@/lib/store";
-import { Menu, PanelRightClose, PanelRightOpen, Cpu, Sparkles } from "lucide-react";
+import { Menu, PanelRightClose, PanelRightOpen, Cpu } from "lucide-react";
+import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
 
 export function ChatHeader({ title }: { title?: string }) {
   const { isSidebarOpen, toggleSidebar, isArtifactOpen, toggleArtifact } = useAppStore();
@@ -27,12 +28,32 @@ export function ChatHeader({ title }: { title?: string }) {
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2.5">
         {/* OpenRouter Free Model Badge */}
         <div className="flex items-center gap-1.5 bg-surface-200 border border-border px-2.5 py-1 rounded-full text-xs text-zinc-300 shadow-sm">
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
           <Cpu size={12} className="text-zinc-400" />
           <span className="font-mono text-[11px] font-medium text-zinc-200">openrouter/free</span>
+        </div>
+
+        {/* Clerk Auth Button / Avatar */}
+        <div className="flex items-center">
+          <SignedIn>
+            <UserButton
+              appearance={{
+                elements: {
+                  userButtonAvatarBox: "w-7 h-7 rounded-full border border-border",
+                },
+              }}
+            />
+          </SignedIn>
+          <SignedOut>
+            <SignInButton mode="modal">
+              <button className="text-xs font-medium px-2.5 py-1 bg-surface-200 hover:bg-surface-100 text-zinc-200 hover:text-white rounded-md border border-border transition-colors">
+                Sign In
+              </button>
+            </SignInButton>
+          </SignedOut>
         </div>
 
         {/* Artifact panel toggle */}

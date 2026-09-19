@@ -16,7 +16,9 @@ import {
   ChevronRight,
   Bot,
   User as UserIcon,
+  LogIn,
 } from "lucide-react";
+import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
 
 export function ChatSidebar() {
   const queryClient = useQueryClient();
@@ -189,12 +191,26 @@ export function ChatSidebar() {
       {/* Footer: User profile & credits */}
       <div className="p-3 border-t border-border-subtle bg-surface-300">
         <div className="flex items-center justify-between mb-2.5">
-          <div className="flex items-center gap-2 overflow-hidden">
-            <div className="w-6 h-6 rounded-full bg-surface-100 flex items-center justify-center text-zinc-300 text-xs border border-border">
-              <UserIcon size={12} />
+          <SignedIn>
+            <div className="flex items-center gap-2 overflow-hidden">
+              <UserButton
+                appearance={{
+                  elements: {
+                    userButtonAvatarBox: "w-6 h-6 rounded-full border border-border",
+                  },
+                }}
+              />
+              <span className="text-xs font-medium text-zinc-200 truncate">My Account</span>
             </div>
-            <span className="text-xs font-medium text-zinc-300 truncate">Candidate Engineer</span>
-          </div>
+          </SignedIn>
+          <SignedOut>
+            <SignInButton mode="modal">
+              <button className="w-full flex items-center justify-center gap-1.5 py-1.5 px-2 bg-surface-200 hover:bg-surface-100 text-zinc-200 hover:text-white rounded-md border border-border text-xs font-medium transition-colors">
+                <LogIn size={12} className="text-accent-blue" />
+                <span>Sign In with Clerk</span>
+              </button>
+            </SignInButton>
+          </SignedOut>
         </div>
         <div className="flex items-center justify-between bg-surface-200 px-2.5 py-1.5 rounded-md border border-border-subtle">
           <div className="flex items-center gap-1.5 text-zinc-400">
