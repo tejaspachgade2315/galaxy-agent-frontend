@@ -76,6 +76,14 @@ export default function ChatPage() {
       } catch (_) {}
     });
 
+    // Full thinking replacement from DB fallback (when on a different serverless container)
+    es.addEventListener("thinking_sync", (e) => {
+      try {
+        const data = JSON.parse(e.data);
+        setThinking(data.text);
+      } catch (_) {}
+    });
+
     es.addEventListener("text_delta", (e) => {
       try {
         const data = JSON.parse(e.data);
@@ -162,7 +170,8 @@ export default function ChatPage() {
     };
   }, []);
 
-  // Resilient Database Polling Fallback: guarantees live UI sync across serverless lambda containers
+  // Resilient Database Polling Fallback: only syncs thinking text and terminal status.
+  // Tool events are NOT emitted here — SSE stream handles those exclusively to prevent duplicates.
   useEffect(() => {
     if (!isStreaming || !activeChatId) return;
 
@@ -180,35 +189,21 @@ export default function ChatPage() {
           return;
         }
 
-        // Sync latest running assistant message thinking and tools from DB
+        // Sync thinking text only (tools are streamed via SSE to avoid duplicates)
         const runningAssistant = (fresh.messages || []).find(
-          (m: any) => m.role === "assistant" && (m.status === "running" || m.status === "completed")
+          (m: any) => m.role === "assistant" && m.status === "running"
         );
         if (runningAssistant && Array.isArray(runningAssistant.content)) {
           for (const block of (runningAssistant.content as any[])) {
             if (block.type === "thinking" && block.thinking && block.thinking !== "Preparing response...") {
               setThinking(block.thinking);
-            } else if (block.type === "tool_call") {
-              onToolStart({
-                toolCallId: block.toolCallId || block.id,
-                name: block.name,
-                input: block.input,
-              });
-            } else if (block.type === "tool_result") {
-              onToolEnd({
-                toolCallId: block.toolCallId || block.id,
-                name: block.name,
-                output: block.output,
-                creditsCost: block.creditsCost,
-                durationMs: block.durationMs,
-              });
             }
           }
         }
       } catch (_) {
         // Ignore transient polling errors
       }
-    }, 2000);
+    }, 2500);
 
     return () => clearInterval(interval);
   }, [isStreaming, activeChatId]);
