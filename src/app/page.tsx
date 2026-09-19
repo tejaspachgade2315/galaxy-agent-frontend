@@ -9,6 +9,8 @@ import { ChatHeader } from "@/components/chat/ChatHeader";
 import { MessageList } from "@/components/chat/MessageList";
 import { Composer } from "@/components/chat/Composer";
 import { ArtifactPanel } from "@/components/chat/ArtifactPanel";
+import { SignedIn, SignedOut, SignInButton } from "@clerk/nextjs";
+import { Bot, LogIn } from "lucide-react";
 
 export default function ChatPage() {
   const queryClient = useQueryClient();
@@ -237,30 +239,58 @@ export default function ChatPage() {
   const messages = chatData?.messages || [];
 
   return (
-    <div className="flex h-screen w-screen bg-background overflow-hidden">
-      {/* Sidebar */}
-      <ChatSidebar />
+    <>
+      <SignedIn>
+        <div className="flex h-screen w-screen bg-background overflow-hidden">
+          {/* Sidebar */}
+          <ChatSidebar />
 
-      {/* Main Chat Workspace */}
-      <div className="flex-1 flex flex-col h-full min-w-0 bg-background relative">
-        <ChatHeader title={currentChat?.title} />
+          {/* Main Chat Workspace */}
+          <div className="flex-1 flex flex-col h-full min-w-0 bg-background relative">
+            <ChatHeader title={currentChat?.title} />
 
-        {/* Message Viewport */}
-        <MessageList
-          messages={messages}
-          onSelectPrompt={(prompt) => handleSendMessage(prompt, false)}
-        />
+            {/* Message Viewport */}
+            <MessageList
+              messages={messages}
+              onSelectPrompt={(prompt) => handleSendMessage(prompt, false)}
+            />
 
-        {/* Composer */}
-        <Composer
-          onSend={handleSendMessage}
-          onCancel={handleCancel}
-          disabled={isLoading}
-        />
-      </div>
+            {/* Composer */}
+            <Composer
+              onSend={handleSendMessage}
+              onCancel={handleCancel}
+              disabled={isLoading}
+            />
+          </div>
 
-      {/* Slide-out Artifact Inspector */}
-      <ArtifactPanel />
-    </div>
+          {/* Slide-out Artifact Inspector */}
+          <ArtifactPanel />
+        </div>
+      </SignedIn>
+
+      <SignedOut>
+        <div className="flex flex-col items-center justify-center min-h-screen w-screen bg-background p-6 text-center select-none">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-accent-purple to-accent-blue flex items-center justify-center shadow-xl mb-6">
+            <Bot size={32} className="text-white" />
+          </div>
+          <h1 className="text-2xl md:text-3xl font-bold text-zinc-100 mb-3 tracking-tight">
+            Galaxy Agent Chat
+          </h1>
+          <p className="text-sm text-zinc-400 max-w-md mb-8 leading-relaxed">
+            Autonomous agent workspace with provider-neutral tool calling, on-demand skills, and Magica media intelligence.
+          </p>
+          <SignInButton mode="modal">
+            <button className="px-6 py-3 bg-gradient-to-r from-accent-blue to-accent-purple hover:opacity-95 text-white font-medium rounded-xl shadow-lg transition-all active:scale-[0.98] flex items-center gap-2.5 text-sm">
+              <LogIn size={16} />
+              <span>Sign In with Clerk to Start</span>
+            </button>
+          </SignInButton>
+          <div className="mt-8 flex items-center gap-2 text-xs text-zinc-500 font-mono">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span>OpenRouter Free · Magica APIs · Neon Postgres</span>
+          </div>
+        </div>
+      </SignedOut>
+    </>
   );
 }
