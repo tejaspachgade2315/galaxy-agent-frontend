@@ -22,7 +22,14 @@ export function Providers({ children }: { children: React.ReactNode }) {
   // If Clerk publishable key is present, wrap in ClerkProvider
   if (clerkKey && clerkKey.trim().length > 0) {
     return (
-      <ClerkProvider publishableKey={clerkKey}>
+      <ClerkProvider
+        publishableKey={clerkKey}
+        appearance={{
+          layout: {
+            unsafe_disableDevelopmentModeWarnings: true,
+          },
+        }}
+      >
         <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
       </ClerkProvider>
     );
